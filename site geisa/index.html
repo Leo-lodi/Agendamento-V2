@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Studio de Unhas</title>
+    <style>
+        /* CSS - Estilização */
+        :root {
+            --primary-color: #d4a5a5; /* Rosa Nude */
+            --secondary-color: #9c6666; /* Tom mais escuro */
+            --bg-color: #fdf6f6;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: var(--primary-color); }
+        
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .note {
+            font-size: 0.8rem;
+            color: #888;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>✨ Agende seu Horário ✨</h2>
+    
+    <form name="submit-to-google-sheet" id="form-agendamento">
+        <div class="form-group">
+            <label for="nome">Seu Nome</label>
+            <input type="text" name="Nome Cliente" id="nome" placeholder="Ex: Maria Silva" required>
+        </div>
+
+        <div class="form-group">
+            <label for="telefone">WhatsApp</label>
+            <input type="tel" name="Telefone" id="telefone" placeholder="(XX) 99999-9999" required>
+        </div>
+
+        <div class="form-group">
+            <label for="servico">Serviço Desejado</label>
+            <select name="Serviço" id="servico" required>
+                <option value="" disabled selected>Selecione...</option>
+                <option value="Unha de Fibra">Aplicação de Fibra</option>
+                <option value="Manutenção Fibra">Manutenção de Fibra</option>
+                <option value="Banho de Gel">Banho de Gel</option>
+                <option value="Esmaltação em Gel">Esmaltação em Gel</option>
+                <option value="Pé e Mão Simples">Pé e Mão Simples</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="data">Data</label>
+            <input type="date" name="Data Agendamento" id="data" required>
+        </div>
+
+        <div class="form-group">
+            <label for="hora">Horário</label>
+            <input type="time" name="Horário" id="hora" min="08:00" max="19:00" required>
+        </div>
+
+        <button type="submit" id="btn-submit">Confirmar Agendamento</button>
+        <div class="loader" id="loader"></div>
+    </form>
+
+    <p class="note">Nós entraremos em contato pelo WhatsApp para confirmar se o horário está disponível!</p>
+</div>
+
+<script>
+    // --- JAVASCRIPT ---
+    // IMPORTANTE: Substitua a URL abaixo pela URL que você copiou do Google Apps Script
+    const scriptURL = https://script.google.com/u/0/home/projects/1kfNvuE7bLnzwwga0UPSuB8i31Ah06cz9AJIMCDnpozL8K7YftDh3tm4s/edit; 
+    
+    const form = document.forms['submit-to-google-sheet'];
+    const btn = document.getElementById('btn-submit');
+    const loader = document.getElementById('loader');
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        
+        // UX: Mostrar loading e desabilitar botão
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+        loader.style.display = "block";
+
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+            .then(response => {
+                // Sucesso
+                alert("Agendamento enviado com sucesso! \nEm breve confirmaremos no seu WhatsApp.");
+                form.reset();
+                btn.disabled = false;
+                btn.innerText = "Confirmar Agendamento";
+                loader.style.display = "none";
+            })
+            .catch(error => {
+                // Erro
+                console.error('Error!', error.message);
+                alert("Ops! Algo deu errado. Tente novamente ou chame no WhatsApp.");
+                btn.disabled = false;
+                btn.innerText = "Confirmar Agendamento";
+                loader.style.display = "none";
+            });
+    });
+</script>
+
+</body>
+</html>
